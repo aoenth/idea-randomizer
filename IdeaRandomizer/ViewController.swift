@@ -18,6 +18,7 @@ class ViewController: UIViewController {
   
   private var ideas = [String]()
   private let CELL_ID = "CELL_ID"
+  private let LATEST_IDEA_IN_PROGRESS = "LATEST_IDEA_IN_PROGRESS"
   private var previouslySelectedIdea: Int?
   private var stackView: UIStackView!
   
@@ -70,6 +71,7 @@ class ViewController: UIViewController {
     setupLayout()
     loadData()
     createRandomizeButton()
+    loadPreviousIdea()
   }
   
   func setupTitle() {
@@ -159,6 +161,10 @@ class ViewController: UIViewController {
     
     if let cell = tableView.cellForRow(at: targetIndexPath) {
       cell.setSelected(true, animated: true)
+      
+      let idea = ideas[row]
+      let defaults = UserDefaults.standard
+      defaults.set(idea, forKey: LATEST_IDEA_IN_PROGRESS)
     }
 
     previouslySelectedIdea = row
@@ -168,8 +174,12 @@ class ViewController: UIViewController {
     let idea = ideas[row]
     currentIdea.text = idea
     if stackView.arrangedSubviews.count == 1 {
-      stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
+      showCurrentIdeaContainer()
     }
+  }
+  
+  func showCurrentIdeaContainer() {
+    stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
   }
   
   @objc func completeRow() {
@@ -222,6 +232,14 @@ extension ViewController: UITableViewDataSource {
   private func checkCompletion(_ idea: String) -> Bool {
     let defaults = UserDefaults.standard
     return defaults.bool(forKey: idea)
+  }
+  
+  private func loadPreviousIdea() {
+    let defaults = UserDefaults.standard
+    if let ideaInProgress = defaults.string(forKey: LATEST_IDEA_IN_PROGRESS) {
+      currentIdea.text = ideaInProgress
+      showCurrentIdeaContainer()
+    }
   }
 }
 
