@@ -88,10 +88,10 @@ class ViewController: UIViewController {
     view.addSubview(stackView)
     
     let salg = view.safeAreaLayoutGuide
-    stackView.topAnchor.constraint(equalTo: salg.topAnchor).isActive = true
-    stackView.bottomAnchor.constraint(equalTo: salg.bottomAnchor).isActive = true
-    stackView.leftAnchor.constraint(equalTo: salg.leftAnchor).isActive = true
-    stackView.rightAnchor.constraint(equalTo: salg.rightAnchor).isActive = true
+    stackView.topAnchor.constraint(equalTo: salg.topAnchor).activate()
+    stackView.bottomAnchor.constraint(equalTo: salg.bottomAnchor).activate()
+    stackView.leftAnchor.constraint(equalTo: salg.leftAnchor).activate()
+    stackView.rightAnchor.constraint(equalTo: salg.rightAnchor).activate()
   }
   
   func loadData() {
@@ -135,12 +135,9 @@ class ViewController: UIViewController {
       randomNumber = Int.random(in: 0 ..< ideas.count)
     } while randomNumber == previouslySelectedIdea
     
+    deselectPreviouslySelectedRow(self.tableView)
     scroll(tableView, toShowRow: randomNumber)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-      self.deselectPreviouslySelectedRow(self.tableView)
-      self.selectRow(self.tableView, atRow: randomNumber)
-      self.showSelectedIdea(atRow: randomNumber)
-    }
+    previouslySelectedIdea = randomNumber
   }
   
   func scroll(_ tableView: UITableView, toShowRow row: Int) {
@@ -232,5 +229,13 @@ extension ViewController: UITableViewDataSource {
 extension ViewController: UITableViewDelegate {
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     deselectPreviouslySelectedRow(tableView)
+    previouslySelectedIdea = indexPath.row
+  }
+  
+  func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+    if let ideaIndex = previouslySelectedIdea {
+      self.selectRow(scrollView as! UITableView, atRow: ideaIndex)
+      self.showSelectedIdea(atRow: ideaIndex)
+    }
   }
 }
