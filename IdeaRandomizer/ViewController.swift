@@ -51,6 +51,10 @@ class ViewController: UIViewController {
     let ideaView = UIView()
     ideaView.addSubview(currentIdea)
     ideaView.addSubview(completeButton)
+    ideaView.layer.borderWidth = 0.5
+    ideaView.layer.cornerRadius = 4
+    ideaView.layer.borderColor = UIColor.systemGray.cgColor
+    
     currentIdea.leadingAnchor.constraint(equalTo: ideaView.leadingAnchor, constant: 8).activate()
     currentIdea.trailingAnchor.constraint(equalTo: completeButton.leadingAnchor, constant: -8).activate()
     currentIdea.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).activate()
@@ -60,7 +64,6 @@ class ViewController: UIViewController {
     completeButton.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).activate()
     completeButton.bottomAnchor.constraint(equalTo: ideaView.bottomAnchor, constant: -8).activate()
     completeButton.widthAnchor.constraint(equalToConstant: 70).activate()
-    
     return ideaView
   }()
 
@@ -71,7 +74,6 @@ class ViewController: UIViewController {
     setupLayout()
     loadData()
     createRandomizeButton()
-    loadPreviousIdea()
   }
   
   func setupTitle() {
@@ -111,6 +113,8 @@ class ViewController: UIViewController {
     self.ideas = strings
     
     tableView.reloadData()
+    
+    loadPreviousIdea()
   }
   
   func createRandomizeButton() {
@@ -163,8 +167,7 @@ class ViewController: UIViewController {
       cell.setSelected(true, animated: true)
       
       let idea = ideas[row]
-      let defaults = UserDefaults.standard
-      defaults.set(idea, forKey: LATEST_IDEA_IN_PROGRESS)
+      setInProgress(idea)
     }
 
     previouslySelectedIdea = row
@@ -176,6 +179,11 @@ class ViewController: UIViewController {
     if stackView.arrangedSubviews.count == 1 {
       showCurrentIdeaContainer()
     }
+  }
+  
+  func setInProgress(_ idea: String) {
+    let defaults = UserDefaults.standard
+    defaults.set(idea, forKey: LATEST_IDEA_IN_PROGRESS)
   }
   
   func showCurrentIdeaContainer() {
