@@ -8,6 +8,12 @@
 
 import UIKit
 
+extension NSLayoutConstraint {
+  func activate() {
+    isActive = true
+  }
+}
+
 class ViewController: UIViewController {
   
   private var ideas = [String]()
@@ -20,6 +26,7 @@ class ViewController: UIViewController {
     tv.translatesAutoresizingMaskIntoConstraints = false
     tv.register(UITableViewCell.self, forCellReuseIdentifier: CELL_ID)
     tv.dataSource = self
+    tv.delegate = self
     return tv
   }()
   
@@ -27,19 +34,32 @@ class ViewController: UIViewController {
     let lbl = UILabel()
     lbl.translatesAutoresizingMaskIntoConstraints = false
     lbl.textAlignment = .center
+    lbl.numberOfLines = 0
     return lbl
+  }()
+  
+  private lazy var completeButton: UIButton = {
+    let btn = UIButton(type: .system)
+    btn.translatesAutoresizingMaskIntoConstraints = false
+    btn.setTitle("Complete", for: .normal)
+    btn.addTarget(self, action: #selector(completeRow), for: .touchUpInside)
+    return btn
   }()
   
   private lazy var currentIdeaContainer: UIView = {
     let ideaView = UIView()
-    ideaView.translatesAutoresizingMaskIntoConstraints = false
     ideaView.addSubview(currentIdea)
+    ideaView.addSubview(completeButton)
+    currentIdea.leadingAnchor.constraint(equalTo: ideaView.leadingAnchor, constant: 8).activate()
+    currentIdea.trailingAnchor.constraint(equalTo: completeButton.leadingAnchor, constant: -8).activate()
+    currentIdea.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).activate()
+    currentIdea.bottomAnchor.constraint(equalTo: ideaView.bottomAnchor, constant: -8).activate()
     
-    currentIdea.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).isActive = true
-    currentIdea.bottomAnchor.constraint(equalTo: ideaView.bottomAnchor, constant: 8).isActive = true
-    currentIdea.leftAnchor.constraint(equalTo: ideaView.leftAnchor, constant: 8).isActive = true
-    currentIdea.rightAnchor.constraint(equalTo: ideaView.rightAnchor, constant: 8).isActive = true
-    currentIdea.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    completeButton.trailingAnchor.constraint(equalTo: ideaView.trailingAnchor, constant: -8).activate()
+    completeButton.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).activate()
+    completeButton.bottomAnchor.constraint(equalTo: ideaView.bottomAnchor, constant: -8).activate()
+    completeButton.widthAnchor.constraint(equalToConstant: 70).activate()
+    
     return ideaView
   }()
 
@@ -143,7 +163,7 @@ class ViewController: UIViewController {
     if let cell = tableView.cellForRow(at: targetIndexPath) {
       cell.setSelected(true, animated: true)
     }
-    
+
     previouslySelectedIdea = row
   }
 
@@ -154,19 +174,63 @@ class ViewController: UIViewController {
       stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
     }
   }
+  
+  @objc func completeRow() {
+    if let idea = currentIdea.text {
+      let defaults = UserDefaults.standard
+      defaults.set(true, forKey: idea)
+    }
+    updateCheckmark()
+  }
+  
+  func updateCheckmark() {
+    if let currentIdea = currentIdea.text {
+      for (index, idea) in ideas.enumerated() {
+        if idea == currentIdea {
+          let indexPath = IndexPath(row: index, section: 0)
+          if let cell = tableView.cellForRow(at: indexPath) {
+            cell.accessoryType = .checkmark
+          }
+        }
+      }
+    }
+  }
 
 }
 
 extension ViewController: UITableViewDataSource {
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: CELL_ID, for: indexPath)
-    cell.textLabel?.text = ideas[indexPath.row]
-    cell.selectionStyle = .blue
+
+    configureCell(cell, indexPath: indexPath)
     return cell
   }
   
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     ideas.count
   }
+  
+  private func configureCell(_ cell: UITableViewCell, indexPath: IndexPath) {
+    let idea = ideas[indexPath.row]
+    cell.textLabel?.text = idea
+    cell.selectionStyle = .blue
+    let isCompleted = checkCompletion(idea)
+    if isCompleted {
+      cell.accessoryType = .checkmark
+    } else {
+      cell.accessoryType = .none
+    }
+  }
+  
+  private func checkCompletion(_ idea: String) -> Bool {
+    let defaults = UserDefaults.standard
+    return defaults.bool(forKey: idea)
+  }
 }
 
+
+extension ViewController: UITableViewDelegate {
+  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    deselectPreviouslySelectedRow(tableView)
+  }
+}
