@@ -13,13 +13,34 @@ class ViewController: UIViewController {
   private var ideas = [String]()
   private let CELL_ID = "CELL_ID"
   private var previouslySelectedIdea: Int?
+  private var stackView: UIStackView!
   
   private lazy var tableView: UITableView = {
     let tv = UITableView()
-    tv.register(UITableViewCell.self, forCellReuseIdentifier: CELL_ID)
     tv.translatesAutoresizingMaskIntoConstraints = false
+    tv.register(UITableViewCell.self, forCellReuseIdentifier: CELL_ID)
     tv.dataSource = self
     return tv
+  }()
+  
+  private lazy var currentIdea: UILabel = {
+    let lbl = UILabel()
+    lbl.translatesAutoresizingMaskIntoConstraints = false
+    lbl.textAlignment = .center
+    return lbl
+  }()
+  
+  private lazy var currentIdeaContainer: UIView = {
+    let ideaView = UIView()
+    ideaView.translatesAutoresizingMaskIntoConstraints = false
+    ideaView.addSubview(currentIdea)
+    
+    currentIdea.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).isActive = true
+    currentIdea.bottomAnchor.constraint(equalTo: ideaView.bottomAnchor, constant: 8).isActive = true
+    currentIdea.leftAnchor.constraint(equalTo: ideaView.leftAnchor, constant: 8).isActive = true
+    currentIdea.rightAnchor.constraint(equalTo: ideaView.rightAnchor, constant: 8).isActive = true
+    currentIdea.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    return ideaView
   }()
 
   override func viewDidLoad() {
@@ -29,8 +50,6 @@ class ViewController: UIViewController {
     setupLayout()
     loadData()
     createRandomizeButton()
-    
-    // Insert that cell on top of the tableView
   }
   
   func setupTitle() {
@@ -42,7 +61,7 @@ class ViewController: UIViewController {
   }
   
   func setupLayout() {
-    let stackView = UIStackView()
+    stackView = UIStackView()
     stackView.translatesAutoresizingMaskIntoConstraints = false
     stackView.axis = .vertical
     stackView.addArrangedSubview(tableView)
@@ -98,8 +117,9 @@ class ViewController: UIViewController {
     
     scroll(tableView, toShowRow: randomNumber)
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-      self.deselectPreviouslySelectedRow(self.tableView, atRow: randomNumber)
+      self.deselectPreviouslySelectedRow(self.tableView)
       self.selectRow(self.tableView, atRow: randomNumber)
+      self.showSelectedIdea(atRow: randomNumber)
     }
   }
   
@@ -108,7 +128,7 @@ class ViewController: UIViewController {
     tableView.scrollToRow(at: destinationIndexPath, at: .middle, animated: true)
   }
   
-  func deselectPreviouslySelectedRow(_ tableView: UITableView, atRow row: Int) {
+  func deselectPreviouslySelectedRow(_ tableView: UITableView) {
     if let previouslySelectedIdea = previouslySelectedIdea {
       let previousIndexPath = IndexPath(row: previouslySelectedIdea, section: 0)
       if let cell = tableView.cellForRow(at: previousIndexPath) {
@@ -120,16 +140,20 @@ class ViewController: UIViewController {
   func selectRow(_ tableView: UITableView, atRow row: Int) {
     let targetIndexPath = IndexPath(row: row, section: 0)
     
-    
-    
     if let cell = tableView.cellForRow(at: targetIndexPath) {
       cell.setSelected(true, animated: true)
     }
     
     previouslySelectedIdea = row
-    title = ideas[row]
   }
 
+  func showSelectedIdea(atRow row: Int) {
+    let idea = ideas[row]
+    currentIdea.text = idea
+    if stackView.arrangedSubviews.count == 1 {
+      stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
+    }
+  }
 
 }
 
