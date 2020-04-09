@@ -81,7 +81,7 @@ class ViewController: UIViewController {
   }
   
   func setupBackground() {
-    view.backgroundColor = .white
+    view.backgroundColor = .systemBackground
   }
   
   func setupLayout() {
