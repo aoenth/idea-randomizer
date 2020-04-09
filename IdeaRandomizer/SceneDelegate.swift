@@ -20,7 +20,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     window?.makeKeyAndVisible()
   }
   
-  func createRootViewController() -> UIViewController {
+  fileprivate func createRootViewController() -> UIViewController {
     let vc = ViewController()
     let nav = UINavigationController()
     nav.viewControllers = [vc]

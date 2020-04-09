@@ -19,7 +19,6 @@ class ViewController: UIViewController {
   
   private var ideas = [Idea]()
   private let CELL_ID = "CELL_ID"
-  private let LATEST_IDEA_IN_PROGRESS = "LATEST_IDEA_IN_PROGRESS"
   private var previouslySelectedIdea: Int?
   private var stackView: UIStackView!
   
@@ -68,6 +67,32 @@ class ViewController: UIViewController {
     return ideaView
   }()
   
+  //MARK: completeButton Methods
+  @objc func completeRow() {
+    markRowAsComplete()
+  }
+  
+  func markRowAsComplete() {
+    if let currentIdea = currentIdea.text {
+      for (index, idea) in ideas.enumerated() {
+        if idea.shortDescription == currentIdea {
+          markRowWithCheckmark(index)
+          ideas[index].isInProgress = false
+          ideas[index].isComplete = true
+        }
+      }
+    }
+  }
+  
+  func markRowWithCheckmark(_ row: Int) {
+    let indexPath = IndexPath(row: row, section: 0)
+    if let cell = tableView.cellForRow(at: indexPath) {
+      cell.accessoryType = .checkmark
+    }
+  }
+  
+  //MARK: - Life cycle
+  
   override func viewDidLoad() {
     super.viewDidLoad()
     setupTitle()
@@ -82,12 +107,18 @@ class ViewController: UIViewController {
     #endif
   }
   
+  //MARK: - viewDidLoad Methods
+  
   func setupTitle() {
     title = "Ideas"
   }
   
   func setupBackground() {
-    view.backgroundColor = .systemBackground
+    if #available(iOS 13, *) {
+      view.backgroundColor = .systemBackground
+    } else {
+      view.backgroundColor = .white
+    }
   }
   
   func setupLayout() {
@@ -159,7 +190,52 @@ class ViewController: UIViewController {
     let debugButton = UIBarButtonItem(title: "Debug", style: .plain, target: self, action: #selector(showDebugOptions))
     navigationItem.leftBarButtonItems?.append(debugButton)
   }
+  #endif
   
+  //MARK: loadData Methods
+  
+  func getIdeas() -> String? {
+    let url = getDocumentsDirectory().appendingPathComponent("Ideas.csv")
+    
+    do {
+      let string = try String(contentsOf: url)
+      return string
+    } catch {
+      handleFileDoesNotExist()
+      print("Cannot fetch ideas: \(error.localizedDescription)")
+    }
+    return nil
+  }
+  
+  private func findInProgress() {
+    let inProgress = ideas.filter { $0.isInProgress }
+    if let inProgressIdea = inProgress.first {
+      showInProgress(forIdea: inProgressIdea)
+    }
+  }
+  
+  //MARK: createRandomizeButton Methods
+  
+  @objc func chooseRandomIdea() {
+    var randomNumber: Int
+    repeat {
+      randomNumber = Int.random(in: 0 ..< ideas.count)
+    } while randomNumber == previouslySelectedIdea && ideas.count > 1
+    
+    deselectPreviouslySelectedRow(tableView)
+    markRowAsInProgress(randomNumber)
+    showSelectedIdea(atRow: randomNumber)
+    scroll(tableView, toShowRow: randomNumber)
+    previouslySelectedIdea = randomNumber
+  }
+  
+  //MARK: createSaveButton Methods
+  @objc func saveToDisk() {
+    writeToFile()
+  }
+  
+  //MARK: addDebugButton Methods
+  #if DEBUG
   @objc func showDebugOptions() {
     let alertController = UIAlertController(title: "Options", message: nil, preferredStyle: .alert)
     alertController.addAction(UIAlertAction(title: "Mark All As \"In Progress\"", style: .default, handler: markAllAsInProgress))
@@ -169,7 +245,76 @@ class ViewController: UIViewController {
     alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
     present(alertController, animated: true)
   }
+  #endif
   
+  //MARK: - Level 2
+  
+  //MARK: getIdeas Methods
+  func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
+  }
+  
+  func handleFileDoesNotExist() {
+    let alertController = UIAlertController(title: "New Idea", message: "Seems like you don't have any ideas yet, would you like to create one?", preferredStyle: .alert)
+    alertController.addAction(UIAlertAction(title: "Ok", style: .default, handler: createNewIdea))
+    alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+    present(alertController, animated: true, completion: nil)
+  }
+  
+  //MARK: findInProgress Methods
+  private func showInProgress(forIdea idea: Idea) {
+    currentIdea.text = idea.shortDescription
+    showCurrentIdeaContainer()
+  }
+  
+  //MARK: chooseRandomIdea Methods
+  func deselectPreviouslySelectedRow(_ tableView: UITableView) {
+    if let previouslySelectedIdea = previouslySelectedIdea {
+      let previousIndexPath = IndexPath(row: previouslySelectedIdea, section: 0)
+      if let cell = tableView.cellForRow(at: previousIndexPath) {
+        cell.setSelected(false, animated: true)
+      }
+    }
+  }
+  
+  func markRowAsInProgress(_ row: Int) {
+    ideas[row].isInProgress = true
+    markRowWithDetailButton(row)
+  }
+  
+  func scroll(_ tableView: UITableView, toShowRow row: Int) {
+    let destinationIndexPath = IndexPath(row: row, section: 0)
+    tableView.scrollToRow(at: destinationIndexPath, at: .middle, animated: true)
+  }
+  
+  //MARK: saveToDisk Methods
+  func writeToFile() {
+    let stringToWrite = createCSV()
+    let directory = getDocumentsDirectory().appendingPathComponent("Ideas.csv")
+    print(directory.absoluteString)
+    print(stringToWrite)
+    do {
+      try stringToWrite.write(to: directory, atomically: true, encoding: String.Encoding.utf8)
+    } catch {
+      fatalError("Cannot be saved to CSV: \(error.localizedDescription)")
+    }
+    
+  }
+  
+  //MARK: writeToFile Methods
+  func createCSV() -> String {
+    var finalString = ""
+    for idea in self.ideas {
+      let inProgress = idea.isInProgress ? 1 : 0
+      let isComplete = idea.isComplete ? 1 : 0
+      finalString += idea.shortDescription + ":::\(inProgress):::\(isComplete)\n"
+    }
+    return finalString
+  }
+  
+  //MARK: showDebugOptions Methods
+  #if DEBUG
   func markAllAsInProgress(_ alert: UIAlertAction) {
     let keyPath = \Idea.isInProgress
     markAs(keyPath: keyPath, bool: true)
@@ -198,128 +343,33 @@ class ViewController: UIViewController {
   }
   #endif
   
-  func getIdeas() -> String? {
-    let url = getDocumentsDirectory().appendingPathComponent("Ideas.csv")
-    
-    do {
-      let string = try String(contentsOf: url)
-      return string
-    } catch {
-      print("Cannot fetch ideas: \(error.localizedDescription)")
-    }
-    return nil
-  }
-  
-  @objc func chooseRandomIdea() {
-    var randomNumber: Int
-    repeat {
-      randomNumber = Int.random(in: 0 ..< ideas.count)
-    } while randomNumber == previouslySelectedIdea
-    
-    deselectPreviouslySelectedRow(self.tableView)
-    markRowAsInProgress(randomNumber)
-    scroll(tableView, toShowRow: randomNumber)
-    previouslySelectedIdea = randomNumber
-  }
-  
-  @objc func saveToDisk() {
-    writeToFile()
-  }
-  
-  func scroll(_ tableView: UITableView, toShowRow row: Int) {
-    let destinationIndexPath = IndexPath(row: row, section: 0)
-    tableView.scrollToRow(at: destinationIndexPath, at: .middle, animated: true)
-  }
-  
-  func deselectPreviouslySelectedRow(_ tableView: UITableView) {
-    if let previouslySelectedIdea = previouslySelectedIdea {
-      let previousIndexPath = IndexPath(row: previouslySelectedIdea, section: 0)
-      if let cell = tableView.cellForRow(at: previousIndexPath) {
-        cell.setSelected(false, animated: true)
+  //MARK: handleFileDoesNotExist Methods
+  func createNewIdea(_ alert: UIAlertAction) {
+    let alertController = UIAlertController(title: "New Idea", message: nil, preferredStyle: .alert)
+    alertController.addTextField(configurationHandler: configureTextField)
+    alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+      if let ideaText = alertController.textFields?.first?.text {
+        self.createNewIdea(ideaText)
+        self.tableView.reloadData()
       }
-    }
+    })
+    alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+    present(alertController, animated: true, completion: nil)
   }
   
-  func markRowAsInProgress(_ row: Int) {
-    ideas[row].isInProgress = true
+  //MARK: createNewIdea Methods
+  func configureTextField(_ textField: UITextField) {
+    textField.placeholder = "Turn photo into black and white app"
   }
   
-  func selectRow(_ tableView: UITableView, atRow row: Int) {
-    let targetIndexPath = IndexPath(row: row, section: 0)
-    
-    if let cell = tableView.cellForRow(at: targetIndexPath) {
-      cell.setSelected(true, animated: true)
-      setInProgress(row)
-    }
-
-    previouslySelectedIdea = row
-  }
-
-  func showSelectedIdea(atRow row: Int) {
-    let idea = ideas[row]
-    currentIdea.text = idea.shortDescription
-    if stackView.arrangedSubviews.count == 1 {
-      showCurrentIdeaContainer()
-    }
+  func createNewIdea(_ ideaDescription: String) {
+    ideas.append(Idea(shortDescription: ideaDescription))
   }
   
-  func setInProgress(_ row: Int) {
-    ideas[row].isInProgress = true
-  }
-  
-  func showCurrentIdeaContainer() {
-    stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
-  }
-  
-  @objc func completeRow() {
-    markRowAsComplete()
-  }
-  
-  func createCSV() -> String {
-    var finalString = ""
-    for idea in self.ideas {
-      let inProgress = idea.isInProgress ? 1 : 0
-      let isComplete = idea.isComplete ? 1 : 0
-      finalString += idea.shortDescription + ":::\(inProgress):::\(isComplete)\n"
-    }
-    return finalString
-  }
-
-  func writeToFile() {
-    let stringToWrite = createCSV()
-    let directory = getDocumentsDirectory().appendingPathComponent("Ideas.csv")
-    print(directory.absoluteString)
-    print(stringToWrite)
-    do {
-      try stringToWrite.write(to: directory, atomically: true, encoding: String.Encoding.utf8)
-    } catch {
-      fatalError("Cannot be saved to CSV: \(error.localizedDescription)")
-    }
-    
-  }
-  
-  func getDocumentsDirectory() -> URL {
-    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-    return paths[0]
-  }
-  
-  func markRowAsComplete() {
-    if let currentIdea = currentIdea.text {
-      for (index, idea) in ideas.enumerated() {
-        if idea.shortDescription == currentIdea {
-          markRowWithCheckmark(index)
-          ideas[index].isInProgress = false
-          ideas[index].isComplete = true
-        }
-      }
-    }
-  }
-  
-  func markRowWithCheckmark(_ row: Int) {
-    let indexPath = IndexPath(row: row, section: 0)
-    if let cell = tableView.cellForRow(at: indexPath) {
-      cell.accessoryType = .checkmark
-    }
+  //MARK: markRowAsInProgress Methods
+  func markRowWithDetailButton(_ row: Int) {
+    let cell = tableView.cellForRow(at: IndexPath(row: row, section: 0))
+    cell?.accessoryType = .detailButton
   }
 }
 
@@ -348,19 +398,7 @@ extension ViewController: UITableViewDataSource {
     }
   }
   
-  private func findInProgress() {
-    let inProgress = ideas.filter { $0.isInProgress }
-    if let inProgressIdea = inProgress.first {
-      showInProgress(forIdea: inProgressIdea)
-    }
-  }
-  
-  private func showInProgress(forIdea idea: Idea) {
-    currentIdea.text = idea.shortDescription
-    showCurrentIdeaContainer()
-  }
 }
-
 
 extension ViewController: UITableViewDelegate {
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -371,7 +409,36 @@ extension ViewController: UITableViewDelegate {
   func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
     if let ideaIndex = previouslySelectedIdea {
       self.selectRow(scrollView as! UITableView, atRow: ideaIndex)
-      self.showSelectedIdea(atRow: ideaIndex)
     }
+  }
+  
+  //MARK: scrollViewDidEndScrollingAnimation Methods
+  func selectRow(_ tableView: UITableView, atRow row: Int) {
+    let targetIndexPath = IndexPath(row: row, section: 0)
+    
+    if let cell = tableView.cellForRow(at: targetIndexPath) {
+      cell.setSelected(true, animated: true)
+      setInProgress(row)
+    }
+    
+    previouslySelectedIdea = row
+  }
+  
+  func showSelectedIdea(atRow row: Int) {
+    let idea = ideas[row]
+    currentIdea.text = idea.shortDescription
+    if stackView.arrangedSubviews.count == 1 {
+      showCurrentIdeaContainer()
+    }
+  }
+  
+  //MARK: selectRow Methods
+  func setInProgress(_ row: Int) {
+    ideas[row].isInProgress = true
+  }
+  
+  //MARK: showSelectedIdea Methods
+  func showCurrentIdeaContainer() {
+    stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
   }
 }
