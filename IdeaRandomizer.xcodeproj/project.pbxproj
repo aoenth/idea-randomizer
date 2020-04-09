@@ -14,6 +14,7 @@
 		0A98BC97243CBEDD0098900A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A98BC95243CBEDD0098900A /* LaunchScreen.storyboard */; };
 		0A98BC9F243CBF760098900A /* Ideas.csv in Resources */ = {isa = PBXBuildFile; fileRef = 0A98BC9E243CBF760098900A /* Ideas.csv */; };
 		0AB68B89243F926000C0DDDC /* Idea.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AB68B88243F926000C0DDDC /* Idea.swift */; };
+		0AB68B8B243FC8C500C0DDDC /* UINavigationController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AB68B8A243FC8C500C0DDDC /* UINavigationController+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		0A98BC98243CBEDD0098900A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0A98BC9E243CBF760098900A /* Ideas.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = Ideas.csv; sourceTree = "<group>"; };
 		0AB68B88243F926000C0DDDC /* Idea.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Idea.swift; sourceTree = "<group>"; };
+		0AB68B8A243FC8C500C0DDDC /* UINavigationController+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UINavigationController+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				0A98BC8A243CBEDB0098900A /* AppDelegate.swift */,
+				0AB68B8A243FC8C500C0DDDC /* UINavigationController+Extension.swift */,
 				0A98BC8C243CBEDB0098900A /* SceneDelegate.swift */,
 				0A98BC8E243CBEDB0098900A /* ViewController.swift */,
 				0A98BC93243CBEDD0098900A /* Assets.xcassets */,
@@ -143,6 +146,7 @@
 			files = (
 				0AB68B89243F926000C0DDDC /* Idea.swift in Sources */,
 				0A98BC8F243CBEDB0098900A /* ViewController.swift in Sources */,
+				0AB68B8B243FC8C500C0DDDC /* UINavigationController+Extension.swift in Sources */,
 				0A98BC8B243CBEDB0098900A /* AppDelegate.swift in Sources */,
 				0A98BC8D243CBEDB0098900A /* SceneDelegate.swift in Sources */,
 			);

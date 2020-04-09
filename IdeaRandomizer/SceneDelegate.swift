@@ -14,18 +14,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
   func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
     guard let scene = (scene as? UIWindowScene) else { return }
-    let rootViewController = createRootViewController()
     window = UIWindow(windowScene: scene)
-    window?.rootViewController = rootViewController
+    window?.rootViewController = UINavigationController.configuredController
     window?.makeKeyAndVisible()
   }
   
-  fileprivate func createRootViewController() -> UIViewController {
-    let vc = ViewController()
-    let nav = UINavigationController()
-    nav.viewControllers = [vc]
-    return nav
-  }
+  
 
 }
 

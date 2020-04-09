@@ -31,6 +31,15 @@ class ViewController: UIViewController {
     return tv
   }()
   
+  private lazy var currentIdeaIndicator: UILabel = {
+    let lbl = UILabel()
+    lbl.text = "Idea Currently Working On:"
+    lbl.font = .preferredFont(forTextStyle: .subheadline)
+    lbl.translatesAutoresizingMaskIntoConstraints = false
+    lbl.textAlignment = .center
+    return lbl
+  }()
+  
   private lazy var currentIdea: UILabel = {
     let lbl = UILabel()
     lbl.translatesAutoresizingMaskIntoConstraints = false
@@ -42,7 +51,8 @@ class ViewController: UIViewController {
   private lazy var completeButton: UIButton = {
     let btn = UIButton(type: .system)
     btn.translatesAutoresizingMaskIntoConstraints = false
-    btn.setTitle("Complete", for: .normal)
+    btn.setTitle("Mark as Complete", for: .normal)
+    btn.titleLabel?.numberOfLines = 2
     btn.addTarget(self, action: #selector(completeRow), for: .touchUpInside)
     return btn
   }()
@@ -51,13 +61,17 @@ class ViewController: UIViewController {
     let ideaView = UIView()
     ideaView.addSubview(currentIdea)
     ideaView.addSubview(completeButton)
+    ideaView.addSubview(currentIdeaIndicator)
     ideaView.layer.borderWidth = 0.5
-    ideaView.layer.cornerRadius = 4
     ideaView.layer.borderColor = UIColor.systemGray.cgColor
+    
+    currentIdeaIndicator.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).activate()
+    currentIdeaIndicator.leadingAnchor.constraint(equalTo: ideaView.leadingAnchor,constant: 8).activate()
+    currentIdeaIndicator.trailingAnchor.constraint(equalTo: completeButton.leadingAnchor, constant: -8).activate()
     
     currentIdea.leadingAnchor.constraint(equalTo: ideaView.leadingAnchor, constant: 8).activate()
     currentIdea.trailingAnchor.constraint(equalTo: completeButton.leadingAnchor, constant: -8).activate()
-    currentIdea.topAnchor.constraint(equalTo: ideaView.topAnchor, constant: 8).activate()
+    currentIdea.topAnchor.constraint(equalTo: currentIdeaIndicator.bottomAnchor, constant: 4).activate()
     currentIdea.bottomAnchor.constraint(equalTo: ideaView.bottomAnchor, constant: -8).activate()
     
     completeButton.trailingAnchor.constraint(equalTo: ideaView.trailingAnchor, constant: -8).activate()
@@ -79,6 +93,8 @@ class ViewController: UIViewController {
           markRowWithCheckmark(index)
           ideas[index].isInProgress = false
           ideas[index].isComplete = true
+          
+          hideCurrentIdeaContainer()
         }
       }
     }
@@ -100,9 +116,9 @@ class ViewController: UIViewController {
     setupLayout()
     loadData()
     createRandomizeButton()
-    createSaveButton()
     addResignActiveObserver()
     #if DEBUG
+    createSaveButton()
     addDebugButton()
     #endif
   }
@@ -110,6 +126,7 @@ class ViewController: UIViewController {
   //MARK: - viewDidLoad Methods
   
   func setupTitle() {
+    navigationItem.largeTitleDisplayMode = .always
     title = "Ideas"
   }
   
@@ -176,9 +193,11 @@ class ViewController: UIViewController {
     navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Choose", style: .plain, target: self, action: #selector(chooseRandomIdea))
   }
   
+  #if DEBUG
   func createSaveButton() {
     navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Save", style: .plain, target: self, action: #selector(saveToDisk))
   }
+  #endif
   
   func addResignActiveObserver() {
     let notificationCenter = NotificationCenter.default
@@ -229,7 +248,7 @@ class ViewController: UIViewController {
     previouslySelectedIdea = randomNumber
   }
   
-  //MARK: createSaveButton Methods
+  //MARK: addResignActiveObserver Methods
   @objc func saveToDisk() {
     writeToFile()
   }
@@ -439,6 +458,11 @@ extension ViewController: UITableViewDelegate {
   
   //MARK: showSelectedIdea Methods
   func showCurrentIdeaContainer() {
-    stackView.insertArrangedSubview(currentIdeaContainer, at: 0)
+    stackView.addArrangedSubview(currentIdeaContainer)
+  }
+  
+  //MARK: markRowAsComplete Methods
+  func hideCurrentIdeaContainer() {
+    stackView.removeArrangedSubview(currentIdeaContainer)
   }
 }

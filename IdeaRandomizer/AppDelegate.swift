@@ -15,7 +15,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     window = UIWindow(frame: UIScreen.main.bounds)
-    window?.rootViewController = createRootViewController()
+    window?.rootViewController = UINavigationController.configuredController
     window?.makeKeyAndVisible()
     return true
   }
@@ -24,13 +24,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   @available(iOS 13, *)
   func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
     return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-  }
-
-  fileprivate func createRootViewController() -> UIViewController {
-    let vc = ViewController()
-    let nav = UINavigationController()
-    nav.viewControllers = [vc]
-    return nav
   }
 
 }
