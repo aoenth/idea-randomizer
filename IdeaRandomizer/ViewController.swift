@@ -9,12 +9,6 @@
 import UIKit
 import NotificationCenter
 
-extension NSLayoutConstraint {
-  func activate() {
-    isActive = true
-  }
-}
-
 class ViewController: UIViewController {
   
   private var ideas = [Idea]()

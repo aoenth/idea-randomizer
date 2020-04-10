@@ -17,3 +17,10 @@ extension UINavigationController {
     return nav
   }
 }
+
+
+extension NSLayoutConstraint {
+  func activate() {
+    isActive = true
+  }
+}
