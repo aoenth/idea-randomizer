@@ -233,7 +233,7 @@ class ViewController: UIViewController {
     var randomNumber: Int
     repeat {
       randomNumber = Int.random(in: 0 ..< ideas.count)
-    } while randomNumber == previouslySelectedIdea && ideas.count > 1
+    } while randomNumber == previouslySelectedIdea && ideas.count > 1 && ideas[randomNumber].isComplete
     
     deselectPreviouslySelectedRow(tableView)
     markRowAsInProgress(randomNumber)
@@ -457,6 +457,6 @@ extension ViewController: UITableViewDelegate {
   
   //MARK: markRowAsComplete Methods
   func hideCurrentIdeaContainer() {
-    stackView.removeArrangedSubview(currentIdeaContainer)
+    currentIdeaContainer.removeFromSuperview()
   }
 }
